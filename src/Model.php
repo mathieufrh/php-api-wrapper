@@ -83,9 +83,9 @@ abstract class Model implements ArrayAccess, JsonSerializable
      *
      * @return Api
      */
-    public function getApi(): Api
+    public function getApi()
     {
-        if (static::$apis[static::$api] ?? null) {
+        if (isset(static::$apis[static::$api])) {
             return static::$apis[static::$api];
         }
 
@@ -95,7 +95,7 @@ abstract class Model implements ArrayAccess, JsonSerializable
     /**
      * @return string|null
      */
-    public function getEntity(): ?string
+    public function getEntity()
     {
         return $this->entity;
     }
@@ -103,7 +103,7 @@ abstract class Model implements ArrayAccess, JsonSerializable
     /**
      * @return string
      */
-    public function getEntities(): string
+    public function getEntities()
     {
         if (substr($this->entity, -1) === 'y') {
             return rtrim($this->entity, 'y').'ies';
@@ -127,7 +127,7 @@ abstract class Model implements ArrayAccess, JsonSerializable
      */
     public function boot()
     {
-        static::bootMethods();
+        static::bootMethods(get_class($this));
     }
 
     /**
@@ -135,9 +135,8 @@ abstract class Model implements ArrayAccess, JsonSerializable
      *
      * @return void
      */
-    protected static function bootMethods()
+    protected static function bootMethods($class)
     {
-        $class = static::class;
         foreach (preg_grep('/^boot[A-Z](\w+)/i', get_class_methods($class)) as $method) {
             if ($method === __FUNCTION__) {
                 continue;
@@ -195,7 +194,7 @@ abstract class Model implements ArrayAccess, JsonSerializable
      */
     public function __call($method, $parameters)
     {
-        return $this->newQuery()->$method(...$parameters);
+        return call_user_func_array([$this->newQuery(), $method], $parameters);
     }
 
     /**
@@ -208,7 +207,7 @@ abstract class Model implements ArrayAccess, JsonSerializable
      */
     public static function __callStatic($method, $parameters)
     {
-        return (new static())->$method(...$parameters);
+        return call_user_func_array([new static(), $method], $parameters);
     }
 
     /**

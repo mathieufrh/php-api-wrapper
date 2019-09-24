@@ -14,12 +14,13 @@ trait HasGlobalScopes
      *
      * @throws \InvalidArgumentException
      */
-    public static function addGlobalScope($scope, ?array $implementation = null)
+    public static function addGlobalScope($scope, $implementation = null)
     {
+        $class = get_class(new static);
         if (is_string($scope) && !is_null($implementation)) {
-            return static::$globalScopes[static::class][$scope] = $implementation;
+            return static::$globalScopes[$class][$scope] = $implementation;
         } elseif (is_array($scope)) {
-            return static::$globalScopes[static::class][spl_object_hash((object) $scope)] = $scope;
+            return static::$globalScopes[$class][spl_object_hash((object) $scope)] = $scope;
         }
 
         throw new \InvalidArgumentException('Global scope must be an array.');
@@ -46,7 +47,7 @@ trait HasGlobalScopes
      */
     public static function getGlobalScope($scope)
     {
-        return static::$globalScopes[static::class][$scope];
+        return static::$globalScopes[get_class(new static)][$scope];
     }
 
     /**
@@ -56,6 +57,7 @@ trait HasGlobalScopes
      */
     public function getGlobalScopes()
     {
-        return is_array(static::$globalScopes) && isset(static::$globalScopes[static::class]) ? static::$globalScopes[static::class] : [];
+        $class = get_class($this);
+        return is_array(static::$globalScopes) && isset(static::$globalScopes[$class]) ? static::$globalScopes[$class] : [];
     }
 }

@@ -45,7 +45,7 @@ class RelationWithoutBuilder implements RelationInterface
 
     public function __call($name, $arguments)
     {
-        return $this->relation->$name(...$arguments);
+        return call_user_func_array([$this->relation, $name], $arguments);
     }
 
     public function __set($name, $value)

@@ -50,21 +50,21 @@ class Api
     public function __call($name, $arguments)
     {
         if (method_exists($this, $name)) {
-            return $this->$name(...$arguments);
+            return call_user_func_array([$this, $name], $arguments);
         }
 
         preg_match('/^(get|create|update|delete)([\w-\_\/]+?)$/', $name, $matches);
 
         $endpoint = strtolower($matches[2]);
         if ('get' === $matches[1]) {
-            if (!is_array($arguments[0] ?? [])) {
-                return $this->findOne($endpoint, ...$arguments);
+            if (isset($arguments[0]) && !is_array($arguments[0])) {
+                return call_user_func_array([$this, 'findOne'], array_merge([$endpoint], $arguments));
             }
 
-            return $this->findAll($endpoint, ...$arguments);
+            return call_user_func_array([$this, 'findAll'], array_merge([$endpoint], $arguments));
         }
 
-        return $this->{$matches[1]}($endpoint, ...$arguments);
+        return call_user_func_array([$this, $matches[1]], array_merge([$endpoint], $arguments));
     }
 
     /**
@@ -75,7 +75,7 @@ class Api
      *
      * @return array
      */
-    protected function findAll(string $endpoint, array $filters = []): array
+    protected function findAll($endpoint, array $filters = [])
     {
         $key = md5(__FUNCTION__.$endpoint.json_encode($filters));
 
@@ -83,10 +83,14 @@ class Api
             return $this->getCache($key);
         }
 
-        return $this->setCache(
-            $key,
-            $this->getTransport()->request('/'.$endpoint, $filters) ?? []
-        );
+        $res = [];
+        try {
+            $res = $this->getTransport()->request('/'.$endpoint, $filters) ?: [];
+        } catch (\Exception $e) {
+            //
+        }
+
+        return $this->setCache($key, $res);
     }
 
     /**
@@ -98,7 +102,7 @@ class Api
      *
      * @return array
      */
-    protected function findOne(string $endpoint, $id, array $filters = [])
+    protected function findOne($endpoint, $id, array $filters = [])
     {
         $uri = '/'.$endpoint.'/'.$id;
         $key = $uri.'?'.http_build_query($filters);
@@ -106,7 +110,11 @@ class Api
             return $this->getCache($key);
         }
 
-        return $this->getTransport()->request($uri, $filters) ?? [];
+        try {
+            return $this->getTransport()->request($uri, $filters) ?: [];
+        } catch (\Exception $e) {
+            return [];
+        }
     }
 
     /**
@@ -118,11 +126,18 @@ class Api
      *
      * @return array
      */
-    protected function update(string $endpoint, $id, $attributes): array
+    protected function update($endpoint, $id, $attributes)
     {
         $key = $endpoint.'/'.$id.'?';
 
-        return $this->setCache($key, $this->getTransport()->request('/'.$endpoint.'/'.$id, $attributes, 'put') ?? []);
+        $res = [];
+        try {
+            $res = $this->getTransport()->request('/'.$endpoint.'/'.$id, $attributes, 'put') ?: [];
+        } catch (\Exception $e) {
+            // 
+        }
+
+        return $this->setCache($key, $res);
     }
 
     /**
@@ -133,9 +148,13 @@ class Api
      *
      * @return array
      */
-    protected function create(string $endpoint, $attributes): array
+    protected function create($endpoint, $attributes)
     {
-        return $this->getTransport()->request('/'.$endpoint, $attributes, 'post') ?? [];
+        try {
+            return $this->getTransport()->request('/'.$endpoint, $attributes, 'post') ?: [];
+        } catch (\Exception $e) {
+            return [];
+        }
     }
 
     /**
@@ -146,11 +165,15 @@ class Api
      *
      * @return array
      */
-    protected function delete(string $endpoint, $id): array
+    protected function delete($endpoint, $id)
     {
         $key = $endpoint.'/'.$id.'?';
         $this->deleteCache($key);
 
-        return $this->getTransport()->request('/'.$endpoint.'/'.$id, [], 'delete') ?? [];
+        try {
+            return $this->getTransport()->request('/'.$endpoint.'/'.$id, [], 'delete') ?: [];
+        } catch (\Exception $e) {
+            return [];
+        }
     }
 }

@@ -38,7 +38,7 @@ abstract class AbstractErrorHandler
     /**
      * @return int
      */
-    public function getMaxTries(): int
+    public function getMaxTries()
     {
         return $this->maxTries;
     }
@@ -48,7 +48,7 @@ abstract class AbstractErrorHandler
      *
      * @return AbstractErrorHandler
      */
-    public function setMaxTries(int $maxTries): self
+    public function setMaxTries($maxTries)
     {
         $this->maxTries = $maxTries;
 
@@ -63,5 +63,5 @@ abstract class AbstractErrorHandler
      *
      * @throws ApiException
      */
-    abstract public function handle(ApiException $exception, array $requestArguments);
+    abstract public function handle(ApiException $exception, $requestArguments);
 }

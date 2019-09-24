@@ -17,7 +17,7 @@ interface TransportInterface
      *
      * @return mixed
      */
-    public function rawRequest($endpoint, array $data = [], $method = 'get');
+    public function rawRequest($endpoint, $data = [], $method = 'get');
 
     /**
      * Call rawRequest and handle the result.
@@ -28,5 +28,5 @@ interface TransportInterface
      *
      * @return mixed
      */
-    public function request($endpoint, array $data = [], $method = 'get');
+    public function request($endpoint, $data = [], $method = 'get');
 }

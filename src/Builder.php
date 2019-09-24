@@ -70,7 +70,11 @@ class Builder
 
     public function first()
     {
-        return $this->get()[0] ?? null;
+        try {
+            return $this->get()[0];
+        } catch (\Exception $e) {
+            return null;
+        }
     }
 
     public function find($field, $value = null)
@@ -95,7 +99,7 @@ class Builder
         } elseif (!is_int($field) && $value !== null && count($this->query)) {
             $this->query = array_merge($this->query, [$field => $value]);
 
-            return $this->where($this->query)->get()[0] ?? null;
+            return $this->where($this->query)->first();
         }
 
         $data = $this->model->getApi()->{'get'.ucfirst($this->model->getEntity())}($field, $this->getQuery());
@@ -213,7 +217,7 @@ class Builder
         }
 
         try {
-            $this->query->{$method}(...$parameters);
+            call_user_func_array([$this->query, $method], $parameters);
         } catch (\Throwable $e) {
             // Pour une raison qui m'échappe, PHP retourne une Fatal exception qui efface la stack d'exception
             // si une erreur arrive... on re throw qqc de plus expressif
@@ -247,7 +251,7 @@ class Builder
 
     public function instanciateModels($data)
     {
-        if (!$data) {
+        if (!is_array($data) && !$data) {
             return null;
         }
 

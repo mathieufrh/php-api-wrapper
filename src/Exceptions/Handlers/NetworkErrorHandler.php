@@ -13,7 +13,7 @@ class NetworkErrorHandler extends AbstractErrorHandler
     /**
      * {@inheritdoc}
      */
-    public function handle(ApiException $exception, array $requestArguments)
+    public function handle(ApiException $exception, $requestArguments)
     {
         if ($this->tries < $this->getMaxTries()) {
             $this->tries++;

@@ -41,7 +41,7 @@ class Transport implements TransportInterface
      * @param string $entrypoint
      * @param CurlClient $client
      */
-    public function __construct(string $entrypoint, CurlClient $client)
+    public function __construct($entrypoint, CurlClient $client)
     {
         $this->client = $client;
         $this->entrypoint = rtrim($entrypoint, '/').'/';
@@ -61,7 +61,7 @@ class Transport implements TransportInterface
      *
      * @return $this
      */
-    public function setErrorHandler(int $code, ?AbstractErrorHandler $handler)
+    public function setErrorHandler($code, $handler)
     {
         $this->errorHandlers[$code] = $handler;
 
@@ -85,7 +85,7 @@ class Transport implements TransportInterface
     /**
      * {@inheritdoc}
      */
-    public function request($endpoint, array $data = [], $method = 'get')
+    public function request($endpoint, $data = [], $method = 'get')
     {
         $rawResponse = $this->rawRequest($endpoint, $data, $method);
         $httpStatusCode = $this->getClient()->httpStatusCode;
@@ -97,11 +97,11 @@ class Transport implements TransportInterface
 
         $exception = new ApiException(
             $response,
-            $response['message'] ?? $rawResponse ?? 'Unknown error message',
+            isset($response['message']) ? $response['message'] : ( $rawResponse ?: 'Unknown error message'),
             $httpStatusCode
         );
 
-        if ($handler = $this->errorHandlers[$httpStatusCode] ?? false) {
+        if (isset($this->errorHandlers[$httpStatusCode]) && ($handler = $this->errorHandlers[$httpStatusCode])) {
             return $handler->handle($exception, compact('endpoint', 'data', 'method'));
         }
 
@@ -111,7 +111,7 @@ class Transport implements TransportInterface
     /**
      * {@inheritdoc}
      */
-    public function rawRequest($endpoint, array $data = [], $method = 'get')
+    public function rawRequest($endpoint, $data = [], $method = 'get')
     {
         $method = strtolower($method);
 
@@ -134,6 +134,9 @@ class Transport implements TransportInterface
                 break;
         }
 
+        $this->getClient()->close();
+        $this->getClient()->reset();
+
         return $this->getClient()->rawResponse;
     }
 
@@ -145,7 +148,7 @@ class Transport implements TransportInterface
      *
      * @return string
      */
-    protected function getUrl(string $endpoint, array $data = [])
+    protected function getUrl($endpoint, $data = [])
     {
         $url = $this->getEntrypoint() . ltrim($endpoint, '/');
 
@@ -169,7 +172,7 @@ class Transport implements TransportInterface
      *
      * @return string|null
      */
-    protected function appendData(array $data = [])
+    protected function appendData($data = [])
     {
         if (!count($data)) {
             return null;

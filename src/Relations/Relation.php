@@ -74,7 +74,7 @@ abstract class Relation implements RelationInterface
      */
     public function __call($method, $parameters)
     {
-        $result = $this->builder->{$method}(...$parameters);
+        $result = call_user_func_array([$this->builder, $method], $parameters);
 
         if ($result === $this->builder) {
             return $this;

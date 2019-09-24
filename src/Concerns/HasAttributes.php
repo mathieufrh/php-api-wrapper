@@ -135,7 +135,11 @@ trait HasAttributes
             case 'timestamp':
                 return $this->asTimestamp($value);
             default:
-                return $this->asModel($key, $value) ?? $value;
+                try {
+                    return $this->asModel($key, $value) ?: $value;
+                } catch (\Exeption $e) {
+                    return $value;
+                }
         }
     }
 
@@ -235,15 +239,14 @@ trait HasAttributes
         // If the attribute exists in the attribute array or has a "get" mutator we will
         // get the attribute's value. Otherwise, we will proceed as if the developers
         // are asking for a relationship's value. This covers both types of values.
-        if (array_key_exists($key, $this->attributes) ||
-            $this->hasGetMutator($key)) {
+        if (array_key_exists($key, $this->attributes) || $this->hasGetMutator($key)) {
             return $this->getAttributeValue($key);
         }
 
         // Here we will determine if the model base class itself contains this given key
         // since we don't want to treat any of those methods as relationships because
         // they are all intended as helper methods and none of these are relations.
-        if (method_exists(self::class, $key)) {
+        if (method_exists('Cpro\ApiWrapper\Model', $key)) {
             return;
         }
 
@@ -532,7 +535,7 @@ trait HasAttributes
     protected function asModel($key, $value)
     {
         $className = $this->getCasts()[$key];
-        if (class_exists($className) && is_a($className, Model::class, true)) {
+        if (class_exists($className) && $className instanceof Model) {
             return new $className($value, true);
         }
 
@@ -698,7 +701,7 @@ trait HasAttributes
      */
     public function getMutatedAttributes()
     {
-        $class = static::class;
+        $class = get_class($this);
 
         if (!isset(static::$mutatorCache[$class])) {
             static::cacheMutatedAttributes($class);
