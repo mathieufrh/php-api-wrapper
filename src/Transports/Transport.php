@@ -82,6 +82,7 @@ class Transport implements TransportInterface
         return $this->client;
     }
 
+
     /**
      * {@inheritdoc}
      */
@@ -122,20 +123,21 @@ class Transport implements TransportInterface
                 break;
             case 'post':
                 $url = $this->getUrl($endpoint);
-                $this->getClient()->post($url, $this->encodeBody($data));
+                $this->getClient()->post($url, $this->encodeBody($data), (version_compare(PHP_VERSION, '5.5.11') < 0) || defined('HHVM_VERSION'));
                 break;
             case 'put':
                 $url = $this->getUrl($endpoint);
                 $this->getClient()->put($url, $this->encodeBody($data));
+                break;
+            case 'patch':
+                $url = $this->getUrl($endpoint);
+                $this->getClient()->patch($url, $this->encodeBody($data));
                 break;
             case 'delete':
                 $url = $this->getUrl($endpoint);
                 $this->getClient()->delete($url, $this->encodeBody($data));
                 break;
         }
-
-        $this->getClient()->close();
-        $this->getClient()->reset();
 
         return $this->getClient()->rawResponse;
     }
